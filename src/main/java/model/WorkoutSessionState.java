@@ -12,15 +12,14 @@ public class WorkoutSessionState {
     private int currentSetIndex;
     private long startTime;
     
-    // Map<ExerciseID, List<SetResult>>
-    // We need a small inner class or structure to hold set results before aggregation
+    
     private Map<Integer, List<SetResult>> results;
 
     public WorkoutSessionState() {
         this.esercizi = new ArrayList<>();
         this.results = new HashMap<>();
         this.currentExerciseIndex = 0;
-        this.currentSetIndex = 1; // 1-based for display
+        this.currentSetIndex = 1; 
         this.startTime = System.currentTimeMillis();
     }
 
