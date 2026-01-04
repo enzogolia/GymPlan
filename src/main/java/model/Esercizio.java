@@ -11,59 +11,32 @@ public class Esercizio {
     private int caricoSuggerito;
     private String recupero;
 
-    public int getIdEsercizio() {
-        return idEsercizio;
-    }
+    public int getIdEsercizio() { return idEsercizio; }
+    public void setIdEsercizio(int idEsercizio) { this.idEsercizio = idEsercizio; }
 
-    public void setIdEsercizio(int idEsercizio) {
-        this.idEsercizio = idEsercizio;
-    }
+    public String getNome() { return nome; }
+    public void setNome(String nome) { this.nome = nome; }
 
-    public String getNome() {
-        return nome;
-    }
+    public String getGruppoMuscolare() { return gruppoMuscolare; }
+    public void setGruppoMuscolare(String gruppoMuscolare) { this.gruppoMuscolare = gruppoMuscolare; }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
+    public int getSerieSuggerite() { return serieSuggerite; }
+    public void setSerieSuggerite(int serieSuggerite) { this.serieSuggerite = serieSuggerite; }
 
-    public String getGruppoMuscolare() {
-        return gruppoMuscolare;
-    }
+    public int getRipetizioni() { return ripetizioni; }
+    public void setRipetizioni(int ripetizioni) { this.ripetizioni = ripetizioni; }
 
-    public void setGruppoMuscolare(String gruppoMuscolare) {
-        this.gruppoMuscolare = gruppoMuscolare;
-    }
+    public int getCaricoSuggerito() { return caricoSuggerito; }
+    public void setCaricoSuggerito(int caricoSuggerito) { this.caricoSuggerito = caricoSuggerito; }
 
-    public int getSerieSuggerite() {
-        return serieSuggerite;
-    }
+    public String getRecupero() { return recupero; }
 
-    public void setSerieSuggerite(int serieSuggerite) {
-        this.serieSuggerite = serieSuggerite;
-    }
-
-    public int getRipetizioni() {
-        return ripetizioni;
-    }
-
-    public void setRipetizioni(int ripetizioni) {
-        this.ripetizioni = ripetizioni;
-    }
-
-    public int getCaricoSuggerito() {
-        return caricoSuggerito;
-    }
-
-    public void setCaricoSuggerito(int caricoSuggerito) {
-        this.caricoSuggerito = caricoSuggerito;
-    }
-
-    public String getRecupero() {
-        return recupero;
-    }
-
+    // MODIFICATO: Gestione del null per evitare NullPointerException
     public void setRecupero(Time recupero) {
-        this.recupero = recupero.toString(); // Converte Time in String
+        if (recupero != null) {
+            this.recupero = recupero.toString();
+        } else {
+            this.recupero = "00:01:30"; // Default se null
+        }
     }
 }

@@ -39,29 +39,44 @@ public class ExecuteSessionServlet extends HttpServlet {
     }
 
     private void startSession(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws ServletException, IOException {
-        int idScheda = Integer.parseInt(request.getParameter("idScheda"));
-        
-        SchedaAllenamentoDAO schedaDAO = new SchedaAllenamentoDAO();
-        SchedaAllenamento scheda = schedaDAO.doRetrieveById(idScheda);
-        
-        SchedaEsercizioDAO schedaEsercizioDAO = new SchedaEsercizioDAO();
-        List<SchedaEsercizio> schedaEsercizi = schedaEsercizioDAO.doRetrieveByIdScheda(idScheda);
-        
-        EsercizioDAO esercizioDAO = new EsercizioDAO();
-        List<Esercizio> esercizi = new ArrayList<>();
-        for (SchedaEsercizio se : schedaEsercizi) {
-            Esercizio e = esercizioDAO.doRetrieveById(se.getIdEsercizio());
-            if (e != null) {
-                esercizi.add(e);
-            }
-        }
+        try {
+            int idScheda = Integer.parseInt(request.getParameter("idScheda"));
 
-        WorkoutSessionState state = new WorkoutSessionState();
-        state.setScheda(scheda);
-        state.setEsercizi(esercizi);
-        
-        session.setAttribute("workoutState", state);
-        response.sendRedirect(request.getContextPath() + "/execute.jsp");
+            SchedaAllenamentoDAO schedaDAO = new SchedaAllenamentoDAO();
+            SchedaAllenamento scheda = schedaDAO.doRetrieveById(idScheda);
+
+            if (scheda == null) {
+                response.sendRedirect("home");
+                return;
+            }
+
+            SchedaEsercizioDAO schedaEsercizioDAO = new SchedaEsercizioDAO();
+            List<SchedaEsercizio> schedaEsercizi = schedaEsercizioDAO.doRetrieveByIdScheda(idScheda);
+
+            EsercizioDAO esercizioDAO = new EsercizioDAO();
+            List<Esercizio> esercizi = new ArrayList<>();
+            for (SchedaEsercizio se : schedaEsercizi) {
+                Esercizio e = esercizioDAO.doRetrieveById(se.getIdEsercizio());
+                if (e != null) {
+                    esercizi.add(e);
+                }
+            }
+
+            // Se la scheda non ha esercizi, non avviare
+            if (esercizi.isEmpty()) {
+                response.sendRedirect("home?error=SchedaVuota");
+                return;
+            }
+
+            WorkoutSessionState state = new WorkoutSessionState();
+            state.setScheda(scheda);
+            state.setEsercizi(esercizi);
+
+            session.setAttribute("workoutState", state);
+            response.sendRedirect(request.getContextPath() + "/execute.jsp");
+        } catch (NumberFormatException e) {
+            response.sendRedirect("home");
+        }
     }
 
     private void saveSet(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException {
@@ -71,15 +86,22 @@ public class ExecuteSessionServlet extends HttpServlet {
             return;
         }
 
-        int reps = Integer.parseInt(request.getParameter("reps"));
-        double weight = Double.parseDouble(request.getParameter("weight"));
-        
-        Esercizio currentExercise = state.getCurrentExercise();
-        if (currentExercise != null) {
-            state.addResult(currentExercise.getIdEsercizio(), reps, weight, false);
+        try {
+            int reps = Integer.parseInt(request.getParameter("reps"));
+            double weight = Double.parseDouble(request.getParameter("weight"));
+
+            Esercizio currentExercise = state.getCurrentExercise();
+            if (currentExercise != null) {
+                state.addResult(currentExercise.getIdEsercizio(), reps, weight, false);
+                // Aggiorna esplicitamente la sessione
+                session.setAttribute("workoutState", state);
+                response.setStatus(HttpServletResponse.SC_OK);
+            } else {
+                response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+            }
+        } catch (NumberFormatException e) {
+            response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
         }
-        
-        response.setStatus(HttpServletResponse.SC_OK);
     }
 
     private void skipSet(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException {
@@ -92,9 +114,10 @@ public class ExecuteSessionServlet extends HttpServlet {
         Esercizio currentExercise = state.getCurrentExercise();
         if (currentExercise != null) {
             state.addResult(currentExercise.getIdEsercizio(), 0, 0, true);
+            // Aggiorna esplicitamente la sessione
+            session.setAttribute("workoutState", state);
+            response.setStatus(HttpServletResponse.SC_OK);
         }
-        
-        response.setStatus(HttpServletResponse.SC_OK);
     }
 
     private void nextStep(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws IOException {
@@ -107,15 +130,26 @@ public class ExecuteSessionServlet extends HttpServlet {
         Esercizio currentExercise = state.getCurrentExercise();
         if (currentExercise != null) {
             int currentSet = state.getCurrentSetIndex();
+
+            // Logica di avanzamento
             if (currentSet < currentExercise.getSerieSuggerite()) {
+                // Prossima serie dello stesso esercizio
                 state.setCurrentSetIndex(currentSet + 1);
             } else {
-                state.setCurrentSetIndex(1);
-                state.setCurrentExerciseIndex(state.getCurrentExerciseIndex() + 1);
+                // Serie finite, passa al prossimo esercizio
+                // Controllo per non andare fuori dai bordi
+                if (state.getCurrentExerciseIndex() < state.getEsercizi().size() - 1) {
+                    state.setCurrentSetIndex(1);
+                    state.setCurrentExerciseIndex(state.getCurrentExerciseIndex() + 1);
+                } else {
+                    // Siamo alla fine, non dovrebbe accadere se il frontend gestisce il bottone Finish,
+                    // ma per sicurezza rimaniamo qui o segniamo come finito.
+                }
             }
+            // Aggiorna esplicitamente la sessione
+            session.setAttribute("workoutState", state);
+            response.setStatus(HttpServletResponse.SC_OK);
         }
-        
-        response.setStatus(HttpServletResponse.SC_OK);
     }
 
     private void finishSession(HttpServletRequest request, HttpServletResponse response, HttpSession session) throws ServletException, IOException {
@@ -127,7 +161,7 @@ public class ExecuteSessionServlet extends HttpServlet {
 
         long endTime = System.currentTimeMillis();
         long durationMillis = endTime - state.getStartTime();
-        
+
         // Formattazione durata HH:mm:ss
         long seconds = durationMillis / 1000;
         long s = seconds % 60;
@@ -141,7 +175,7 @@ public class ExecuteSessionServlet extends HttpServlet {
         sa.setData(new Date());
         sa.setDurata(durationStr);
         sa.setStato("Completata");
-        
+
         SessioneAllenamentoDAO saDAO = new SessioneAllenamentoDAO();
         int idSessione = saDAO.doSave(sa);
 
@@ -149,40 +183,40 @@ public class ExecuteSessionServlet extends HttpServlet {
         int totalReps = 0;
         double totalWeightSum = 0;
         int totalWeightCount = 0;
-        
+
         SerieSvoltaDAO ssDAO = new SerieSvoltaDAO();
-        
+
         for (Map.Entry<Integer, List<WorkoutSessionState.SetResult>> entry : state.getResults().entrySet()) {
             int exerciseId = entry.getKey();
             List<WorkoutSessionState.SetResult> results = entry.getValue();
-            
+
             int exerciseReps = 0;
             double exerciseWeightSum = 0;
             int exerciseWeightCount = 0;
             boolean anySetDone = false;
-            
+
             for (WorkoutSessionState.SetResult res : results) {
                 if (!res.skipped) {
                     exerciseReps += res.reps;
                     exerciseWeightSum += res.weight;
                     exerciseWeightCount++;
                     anySetDone = true;
-                    
+
                     totalReps += res.reps;
                     totalWeightSum += res.weight;
                     totalWeightCount++;
                 }
             }
-            
+
             double avgWeightExercise = exerciseWeightCount > 0 ? exerciseWeightSum / exerciseWeightCount : 0;
-            
+
             SerieSvolta ss = new SerieSvolta();
             ss.setIdSessione(idSessione);
             ss.setIdEsercizio(exerciseId);
             ss.setRipetizioniEseguite(exerciseReps);
             ss.setEsito(anySetDone ? 1 : 0);
             ss.setPesoUsato(avgWeightExercise);
-            
+
             ssDAO.doSave(ss);
         }
 
@@ -196,17 +230,17 @@ public class ExecuteSessionServlet extends HttpServlet {
         ra.setPesoMedio(globalAvgWeight);
         ra.setSessioniTotali(sessionCount);
         ra.setDurataMedia(durationStr);
-        
+
         ReportAllenamentoDAO raDAO = new ReportAllenamentoDAO();
         raDAO.doSave(ra);
 
         // Set degli attributi per la vista del Report
         request.setAttribute("report", ra);
         request.setAttribute("finished", true);
-        
+
         // Pulisce lo stato della sessione
         session.removeAttribute("workoutState");
-        
+
         request.getRequestDispatcher("/execute.jsp").forward(request, response);
     }
 }
