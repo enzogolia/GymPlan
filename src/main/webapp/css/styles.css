@@ -184,3 +184,116 @@ footer {
     color: var(--text-secondary);
     font-size: 0.9rem;
 }
+/* Barra di ricerca */
+.search-input {
+    width: 100%;
+    padding: 12px 15px;
+    background-color: #2C2C2C;
+    border: 2px solid #444;
+    border-radius: 8px;
+    color: white;
+    font-size: 1rem;
+    transition: border-color 0.3s, box-shadow 0.3s;
+    margin-bottom: 1rem;
+}
+
+.search-input:focus {
+    border-color: var(--accent-orange);
+    box-shadow: 0 0 8px rgba(255, 152, 0, 0.3);
+    outline: none;
+}
+
+/* Container Tabella con scroll */
+.table-scroll-container {
+    height: 400px;
+    overflow-y: auto;
+    border: 1px solid #333;
+    border-radius: 8px;
+    background-color: #1a1a1a;
+}
+
+/* Righe tabella interattive */
+.exercise-row:hover {
+    background-color: rgba(255, 152, 0, 0.05); /* Arancione chiarissimo */
+}
+
+/* --- CUSTOM CHECKBOX --- */
+.custom-checkbox-container {
+    display: block;
+    position: relative;
+    padding-left: 35px;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 22px;
+    user-select: none;
+    height: 25px; /* Forza altezza per allineamento */
+}
+
+/* Nasconde l'input standard */
+.custom-checkbox-container input {
+    position: absolute;
+    opacity: 0;
+    cursor: pointer;
+    height: 0;
+    width: 0;
+}
+
+/* Il quadrato personalizzato */
+.checkmark {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 25px;
+    width: 25px;
+    background-color: #333;
+    border: 2px solid var(--accent-orange);
+    border-radius: 5px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Hover sul container */
+.custom-checkbox-container:hover input ~ .checkmark {
+    background-color: #444;
+}
+
+/* Quando è selezionato */
+.custom-checkbox-container input:checked ~ .checkmark {
+    background-color: var(--accent-orange);
+    box-shadow: 0 0 10px rgba(255, 152, 0, 0.5);
+}
+
+/* Icona di spunta (creata col CSS) */
+.checkmark:after {
+    content: "";
+    position: absolute;
+    display: none;
+}
+
+.custom-checkbox-container input:checked ~ .checkmark:after {
+    display: block;
+}
+
+.custom-checkbox-container .checkmark:after {
+    left: 8px;
+    top: 4px;
+    width: 6px;
+    height: 12px;
+    border: solid #000; /* Spunta nera */
+    border-width: 0 3px 3px 0;
+    -webkit-transform: rotate(45deg);
+    -ms-transform: rotate(45deg);
+    transform: rotate(45deg);
+}
+.badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: bold;
+    text-transform: uppercase;
+    color: #fff;
+    display: inline-block;
+}
+
+.badge-1 { background-color: #388E3C; } /* Verde - Principiante */
+.badge-2 { background-color: #FBC02D; color: #000; } /* Giallo - Intermedio */
+.badge-3 { background-color: #D32F2F; } /* Rosso - Esperto */
