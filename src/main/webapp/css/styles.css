@@ -32,19 +32,20 @@ ul { list-style: none; }
 /* --- HEADER --- */
 header {
     background-color: var(--card-bg);
-    padding: 0.5rem 2rem;
+    padding: 0.8rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     border-bottom: 2px solid #333;
 }
 
+/* Stili specifici per il Logo e l'immagine */
 .logo {
-    font-size: 1.5rem;
+    font-size: 1rem;
     font-weight: bold;
     color: var(--accent-orange);
     text-transform: uppercase;
-    letter-spacing: 2px;
+    letter-spacing: 1.5px;
 }
 
 .logo a {
@@ -58,14 +59,14 @@ header {
     letter-spacing: 2px;
 }
 
-
 .logo-img {
-    height: 50px;
+    height: 35px;
     width: auto;
     margin-right: 12px;
     object-fit: contain;
 }
 
+/* Navigazione */
 nav ul {
     display: flex;
     gap: 20px;
@@ -97,9 +98,8 @@ nav a:hover { color: var(--accent-orange); }
 
 .btn-primary {
     background-color: var(--accent-orange);
-    color: #000; /* Testo nero su arancione per contrasto */
+    color: #000;
 }
-
 .btn-primary:hover { background-color: var(--accent-hover); }
 
 .btn-secondary {
@@ -107,7 +107,6 @@ nav a:hover { color: var(--accent-orange); }
     border: 2px solid var(--accent-orange);
     color: var(--accent-orange);
 }
-
 .btn-secondary:hover {
     background-color: var(--accent-orange);
     color: #000;
@@ -115,6 +114,10 @@ nav a:hover { color: var(--accent-orange); }
 
 .btn-danger {
     background-color: var(--danger);
+    color: white;
+}
+.btn-success {
+    background-color: var(--success);
     color: white;
 }
 
@@ -150,12 +153,27 @@ input[type="text"], input[type="password"], input[type="email"], input[type="num
     border-radius: 4px;
 }
 
-input:focus { outline: 2px solid var(--accent-orange); border-color: transparent; }
+input:focus, select:focus, textarea:focus {
+    outline: 2px solid var(--accent-orange);
+    border-color: transparent;
+}
 
 /* --- TABLES --- */
 table { width: 100%; border-collapse: collapse; margin-bottom: 1rem; }
+
 th, td { padding: 12px; text-align: left; border-bottom: 1px solid #333; }
-th { color: var(--accent-orange); text-transform: uppercase; font-size: 0.9rem; }
+
+/* MODIFICA IMPORTANTE: Intestazione fissa (Sticky Header) */
+th {
+    color: var(--accent-orange);
+    text-transform: uppercase;
+    font-size: 0.9rem;
+    position: sticky; /* Fissa l'intestazione */
+    top: 0;
+    background-color: var(--card-bg); /* Sfondo necessario per coprire il testo che scorre sotto */
+    z-index: 10; /* Assicura che stia sopra */
+}
+
 tr:hover { background-color: #252525; }
 
 /* --- UTILITIES --- */
@@ -184,6 +202,9 @@ footer {
     color: var(--text-secondary);
     font-size: 0.9rem;
 }
+
+/* --- SEZIONE RICERCA E SCROLL --- */
+
 /* Barra di ricerca */
 .search-input {
     width: 100%;
@@ -210,6 +231,7 @@ footer {
     border: 1px solid #333;
     border-radius: 8px;
     background-color: #1a1a1a;
+    position: relative; /* Necessario per lo sticky header */
 }
 
 /* Righe tabella interattive */
@@ -284,6 +306,8 @@ footer {
     -ms-transform: rotate(45deg);
     transform: rotate(45deg);
 }
+
+/* --- BADGES LIVELLO --- */
 .badge {
     padding: 4px 8px;
     border-radius: 4px;
@@ -297,3 +321,54 @@ footer {
 .badge-1 { background-color: #388E3C; } /* Verde - Principiante */
 .badge-2 { background-color: #FBC02D; color: #000; } /* Giallo - Intermedio */
 .badge-3 { background-color: #D32F2F; } /* Rosso - Esperto */
+
+
+/* --- STILI PER PAGINA ESECUZIONE (execute.jsp) --- */
+
+/* 1. Aumentiamo l'altezza fissa per farci stare i bottoni */
+.equal-height-card {
+    height: 620px; /* Aumentato da 520px a 620px */
+    overflow: hidden;
+    display: flex;       /* Assicura che il flex interno funzioni bene */
+    flex-direction: column;
+}
+
+/* 2. Il contenitore destro specifico */
+.execution-card-container {
+    padding: 1.5rem;
+}
+
+/* 3. Il titolo "Esecuzione" */
+.execution-card-container h3 {
+    flex-shrink: 0;
+}
+
+/* 4. Il wrapper occupa tutto lo spazio verticale rimasto */
+.img-wrapper {
+    flex-grow: 1;
+    position: relative;
+    width: 100%;
+    min-height: 0;
+}
+
+/* 5. L'immagine si adatta al nuovo spazio più grande */
+.execution-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+
+    border-radius: 8px;
+    filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5));
+}
+
+/* SU MOBILE */
+@media (max-width: 900px) {
+    .grid-container {
+        grid-template-columns: 1fr !important;
+    }
+    .equal-height-card {
+        height: auto !important;
+        min-height: 400px;
+    }
+}

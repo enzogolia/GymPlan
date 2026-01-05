@@ -3,11 +3,11 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
-<%-- Inclusione statica dell'header --%>
+<%-- Inclusione dell'header --%>
 <%@ include file="header.jsp" %>
 
 <%
-  // Controllo di sicurezza
+  // Controllo di sicurezza: se non c'è stato o flag finished, torna al profilo
   if (session.getAttribute("workoutState") == null && request.getAttribute("finished") == null) {
     response.sendRedirect("profile.jsp");
     return;
@@ -17,7 +17,9 @@
 <div class="container">
 
   <c:choose>
-    <%-- SCENARIO 1: ALLENAMENTO COMPLETATO --%>
+    <%-- ==================================================================
+         SCENARIO 1: ALLENAMENTO COMPLETATO
+         ================================================================== --%>
     <c:when test="${finished}">
       <div class="text-center">
         <h1 style="color: var(--success); margin-bottom: 2rem;">
@@ -47,37 +49,44 @@
       </div>
     </c:when>
 
-    <%-- SCENARIO 2: ESECUZIONE IN CORSO --%>
+    <%-- ==================================================================
+         SCENARIO 2: ESECUZIONE IN CORSO
+         ================================================================== --%>
     <c:otherwise>
       <c:set var="state" value="${sessionScope.workoutState}" />
       <c:set var="currEx" value="${state.currentExercise}" />
 
-      <%-- Calcolo se siamo all'ultimo step per cambiare il testo del bottone --%>
+      <%-- Calcolo se siamo all'ultimo step (ultima serie dell'ultimo esercizio) --%>
       <c:set var="isLastStep" value="${state.currentExerciseIndex == state.esercizi.size() - 1 && state.currentSetIndex == currEx.serieSuggerite}" />
 
       <h1 class="text-center" style="margin-bottom: 20px;">
           ${state.scheda.nome} <span style="font-size: 0.6em; color: var(--text-secondary);">(In corso)</span>
       </h1>
 
-      <div class="grid-container" style="grid-template-columns: 2fr 1fr;">
+      <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch;">
 
-        <div class="card">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-              <h2 style="margin-bottom: 5px; color: var(--accent-orange);">${currEx.nome}</h2>
-              <p style="font-size: 0.9rem; color: var(--text-secondary);">Gruppo: ${currEx.gruppoMuscolare}</p>
+          <%-- COLONNA SINISTRA: CONTROLLI --%>
+          <%-- justify-content: space-between distribuisce gli elementi per riempire l'altezza fissa --%>
+        <div class="card equal-height-card" style="display: flex; flex-direction: column; justify-content: space-between;">
+
+          <div>
+            <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+              <div>
+                <h2 style="margin-bottom: 5px; color: var(--accent-orange);">${currEx.nome}</h2>
+                <p style="font-size: 0.9rem; color: var(--text-secondary);">Gruppo: ${currEx.gruppoMuscolare}</p>
+              </div>
+              <div style="background: #333; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
+                Serie: ${state.currentSetIndex} / ${currEx.serieSuggerite}
+              </div>
             </div>
-            <div style="background: #333; padding: 5px 10px; border-radius: 4px; font-weight: bold;">
-              Serie: ${state.currentSetIndex} / ${currEx.serieSuggerite}
+
+            <div class="alert" style="background-color: rgba(255, 152, 0, 0.1); border: 1px solid var(--accent-orange); margin: 1rem 0;">
+              <strong>Target:</strong> ${currEx.ripetizioni} Reps &nbsp;|&nbsp;
+              <strong>Recupero:</strong> <span id="recuperoTime">${currEx.recupero}</span>
             </div>
           </div>
 
-          <div class="alert" style="background-color: rgba(255, 152, 0, 0.1); border: 1px solid var(--accent-orange); margin: 1.5rem 0;">
-            <strong>Target:</strong> ${currEx.ripetizioni} Reps &nbsp;|&nbsp;
-            <strong>Recupero:</strong> <span id="recuperoTime">${currEx.recupero}</span>
-          </div>
-
-          <div style="text-align: center; margin: 2rem 0; padding: 1rem; background: #1a1a1a; border-radius: 8px;">
+          <div style="text-align: center; padding: 1rem; background: #1a1a1a; border-radius: 8px; margin: 10px 0;">
             <div id="timerDisplay" style="font-size: 3rem; font-weight: bold; font-family: monospace; color: var(--text-primary);">00:00</div>
             <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center;">
               <button type="button" class="btn btn-secondary" onclick="startTimer()"><i class="fas fa-play"></i> Start</button>
@@ -86,44 +95,51 @@
             </div>
           </div>
 
-          <div style="display: flex; gap: 20px; margin-bottom: 2rem;">
-            <div style="flex: 1;">
-              <label for="weight">Carico (Kg)</label>
-              <input type="number" id="weight" name="weight" value="${currEx.caricoSuggerito}" step="0.5" style="font-size: 1.2rem;">
+          <div>
+            <div style="display: flex; gap: 20px; margin-bottom: 1rem;">
+              <div style="flex: 1;">
+                <label for="weight">Carico (Kg)</label>
+                <input type="number" id="weight" name="weight" value="${currEx.caricoSuggerito}" step="0.5" style="font-size: 1.2rem;">
+              </div>
+              <div style="flex: 1;">
+                <label for="reps">Ripetizioni</label>
+                <input type="number" id="reps" name="reps" value="${currEx.ripetizioni}" style="font-size: 1.2rem;">
+              </div>
             </div>
-            <div style="flex: 1;">
-              <label for="reps">Ripetizioni Eseguite</label>
-              <input type="number" id="reps" name="reps" value="${currEx.ripetizioni}" style="font-size: 1.2rem;">
+
+            <div style="display: flex; gap: 15px;">
+              <button type="button" class="btn btn-primary" id="btnSave" onclick="saveAndNext()" style="flex: 2; padding: 1rem; font-size: 1.1rem;">
+                <i class="fas fa-check"></i>
+                <c:choose>
+                  <c:when test="${isLastStep}">SALVA E TERMINA</c:when>
+                  <c:otherwise>SALVA E PROSSIMO</c:otherwise>
+                </c:choose>
+              </button>
+
+              <button type="button" class="btn btn-danger" id="btnSkip" onclick="skipAndNext()" style="flex: 1; background-color: #d32f2f;">
+                <i class="fas fa-forward"></i> SALTA
+              </button>
             </div>
           </div>
 
-          <div style="display: flex; gap: 15px; margin-bottom: 1rem;">
-
-            <button type="button" class="btn btn-primary" id="btnSave" onclick="saveAndNext()" style="flex: 2; padding: 1rem; font-size: 1.1rem;">
-              <i class="fas fa-check"></i>
-              <c:choose>
-                <c:when test="${isLastStep}">SALVA E TERMINA</c:when>
-                <c:otherwise>SALVA E PROSSIMO</c:otherwise>
-              </c:choose>
-            </button>
-
-            <button type="button" class="btn btn-danger" id="btnSkip" onclick="skipAndNext()" style="flex: 1; background-color: #d32f2f;">
-              <i class="fas fa-forward"></i> SALTA
-            </button>
-          </div>
-
+            <%-- Form nascosto per finire l'allenamento --%>
           <form action="${pageContext.request.contextPath}/executeScheda" method="post" id="finishForm">
             <input type="hidden" name="action" value="finish">
           </form>
 
         </div>
 
-        <div class="card" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
-          <h3 class="text-center" style="margin-bottom: 1rem;">Muscolo Target</h3>
-          <img src="${pageContext.request.contextPath}/images/${currEx.gruppoMuscolare}.jpg"
-               alt="${currEx.gruppoMuscolare}"
-               style="max-width: 100%; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.5);"
-               onerror="this.src='https://placehold.co/400x400?text=No+Image';">
+          <%-- COLONNA DESTRA: IMMAGINE --%>
+          <%-- Nota: Usa le classi 'equal-height-card' e 'execution-card-container' --%>
+        <div class="card equal-height-card execution-card-container">
+          <h3 class="text-center" style="margin-bottom: 1rem;">Esecuzione</h3>
+
+          <div class="img-wrapper">
+            <img src="${pageContext.request.contextPath}/images/${currEx.immagine}"
+                 alt="${currEx.nome}"
+                 class="execution-img"
+                 onerror="this.src='https://placehold.co/400x300?text=No+Image';">
+          </div>
         </div>
 
       </div>
@@ -132,15 +148,16 @@
 
 </div>
 
+<%-- JAVASCRIPT --%>
 <script>
-  // Passiamo la variabile booleana da JSP a JS per sapere se è l'ultimo step
+  // Variabile per sapere se è l'ultimo step
   const isLastStep = ${isLastStep != null ? isLastStep : false};
 
   let timerInterval;
   let seconds = 0;
   let targetSeconds = 0;
 
-  // SETUP TIMER
+  // --- PARSING TEMPO RECUPERO ---
   const recuperoElement = document.getElementById('recuperoTime');
   if (recuperoElement) {
     const timeText = recuperoElement.innerText.trim();
@@ -150,10 +167,11 @@
     } else if (parts.length === 2) {
       targetSeconds = (+parts[0]) * 60 + (+parts[1]);
     } else {
-      targetSeconds = 90;
+      targetSeconds = 90; // Default 1m 30s
     }
   }
 
+  // --- LOGICA TIMER ---
   function updateTimerDisplay() {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
@@ -188,8 +206,7 @@
     updateTimerDisplay();
   }
 
-  // --- FUNZIONI SMART (Concatenano Azione + Next) ---
-
+  // --- LOGICA SALVATAGGIO ---
   function saveAndNext() {
     const reps = document.getElementById('reps').value;
     const weight = document.getElementById('weight').value;
@@ -206,14 +223,13 @@
     btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Attendi...';
     btnSave.disabled = true;
 
-    // 1. Esegui il salvataggio
+    // Chiamata AJAX
     fetch('${pageContext.request.contextPath}/executeScheda', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'action=saveSet&reps=' + reps + '&weight=' + weight
     }).then(response => {
       if (response.ok) {
-        // 2. Se OK, passa automaticamente al prossimo step
         handleAutomaticNext();
       } else {
         alert("Errore nel salvataggio server.");
@@ -248,13 +264,10 @@
     }
   }
 
-  // Funzione che decide se andare avanti o finire
   function handleAutomaticNext() {
     if (isLastStep) {
-      // Se era l'ultima serie, invia il form di fine
       document.getElementById('finishForm').submit();
     } else {
-      // Altrimenti chiama nextStep e ricarica
       fetch('${pageContext.request.contextPath}/executeScheda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
