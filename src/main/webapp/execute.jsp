@@ -7,7 +7,7 @@
 <%@ include file="header.jsp" %>
 
 <%
-  // Controllo di sicurezza: se non c'è stato attivo e non è finito, torna al profilo
+  // Controllo di sicurezza
   if (session.getAttribute("workoutState") == null && request.getAttribute("finished") == null) {
     response.sendRedirect("profile.jsp");
     return;
@@ -52,11 +52,15 @@
       <c:set var="state" value="${sessionScope.workoutState}" />
       <c:set var="currEx" value="${state.currentExercise}" />
 
+      <%-- Calcolo se siamo all'ultimo step per cambiare il testo del bottone --%>
+      <c:set var="isLastStep" value="${state.currentExerciseIndex == state.esercizi.size() - 1 && state.currentSetIndex == currEx.serieSuggerite}" />
+
       <h1 class="text-center" style="margin-bottom: 20px;">
           ${state.scheda.nome} <span style="font-size: 0.6em; color: var(--text-secondary);">(In corso)</span>
       </h1>
 
       <div class="grid-container" style="grid-template-columns: 2fr 1fr;">
+
         <div class="card">
           <div style="display: flex; justify-content: space-between; align-items: flex-start;">
             <div>
@@ -94,34 +98,24 @@
           </div>
 
           <div style="display: flex; gap: 15px; margin-bottom: 1rem;">
-            <button type="button" class="btn btn-primary" id="btnSave" onclick="saveSet()" style="flex: 1;">
-              <i class="fas fa-save"></i> SALVA SERIE
+
+            <button type="button" class="btn btn-primary" id="btnSave" onclick="saveAndNext()" style="flex: 2; padding: 1rem; font-size: 1.1rem;">
+              <i class="fas fa-check"></i>
+              <c:choose>
+                <c:when test="${isLastStep}">SALVA E TERMINA</c:when>
+                <c:otherwise>SALVA E PROSSIMO</c:otherwise>
+              </c:choose>
             </button>
-            <button type="button" class="btn btn-danger" id="btnSkip" onclick="skipSet()" style="flex: 1; background-color: #d32f2f;">
+
+            <button type="button" class="btn btn-danger" id="btnSkip" onclick="skipAndNext()" style="flex: 1; background-color: #d32f2f;">
               <i class="fas fa-forward"></i> SALTA
             </button>
           </div>
 
-          <div style="margin-top: 10px;">
-              <%-- SE È L'ULTIMO STEP DELL'ULTIMO ESERCIZIO MOSTRA TERMINA --%>
-            <c:choose>
-              <c:when test="${state.currentExerciseIndex == state.esercizi.size() - 1 && state.currentSetIndex == currEx.serieSuggerite}">
-                <form action="${pageContext.request.contextPath}/executeScheda" method="post" id="finishForm">
-                  <input type="hidden" name="action" value="finish">
-                  <button type="button" class="btn btn-success" id="btnFinish" onclick="finishWorkout()" disabled
-                          style="width: 100%; background-color: var(--success); color: white; padding: 1rem; font-size: 1.1rem;">
-                    <i class="fas fa-flag-checkered"></i> TERMINA ALLENAMENTO
-                  </button>
-                </form>
-              </c:when>
-              <c:otherwise>
-                <button type="button" class="btn btn-primary" id="btnNext" onclick="nextStep()" disabled
-                        style="width: 100%; background-color: #fff; color: #000; font-weight: bold;">
-                  PROSSIMO STEP <i class="fas fa-chevron-right"></i>
-                </button>
-              </c:otherwise>
-            </c:choose>
-          </div>
+          <form action="${pageContext.request.contextPath}/executeScheda" method="post" id="finishForm">
+            <input type="hidden" name="action" value="finish">
+          </form>
+
         </div>
 
         <div class="card" style="display: flex; flex-direction: column; justify-content: center; align-items: center;">
@@ -139,6 +133,9 @@
 </div>
 
 <script>
+  // Passiamo la variabile booleana da JSP a JS per sapere se è l'ultimo step
+  const isLastStep = ${isLastStep != null ? isLastStep : false};
+
   let timerInterval;
   let seconds = 0;
   let targetSeconds = 0;
@@ -148,14 +145,12 @@
   if (recuperoElement) {
     const timeText = recuperoElement.innerText.trim();
     const parts = timeText.split(':');
-
-    // Supporta HH:mm:ss e mm:ss
     if (parts.length === 3) {
       targetSeconds = (+parts[0]) * 3600 + (+parts[1]) * 60 + (+parts[2]);
     } else if (parts.length === 2) {
       targetSeconds = (+parts[0]) * 60 + (+parts[1]);
     } else {
-      targetSeconds = 90; // Default 90 sec se parsing fallisce
+      targetSeconds = 90;
     }
   }
 
@@ -169,7 +164,6 @@
   function startTimer() {
     if (timerInterval) return;
     document.getElementById('timerDisplay').style.color = "var(--accent-orange)";
-
     timerInterval = setInterval(() => {
       seconds++;
       updateTimerDisplay();
@@ -194,9 +188,9 @@
     updateTimerDisplay();
   }
 
-  // --- AJAX CALLS ---
+  // --- FUNZIONI SMART (Concatenano Azione + Next) ---
 
-  function saveSet() {
+  function saveAndNext() {
     const reps = document.getElementById('reps').value;
     const weight = document.getElementById('weight').value;
 
@@ -207,19 +201,20 @@
 
     const btnSave = document.getElementById('btnSave');
     const originalText = btnSave.innerHTML;
-    btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvataggio...';
+
+    // Feedback visivo
+    btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Attendi...';
     btnSave.disabled = true;
 
+    // 1. Esegui il salvataggio
     fetch('${pageContext.request.contextPath}/executeScheda', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'action=saveSet&reps=' + reps + '&weight=' + weight
     }).then(response => {
       if (response.ok) {
-        enableNext();
-        btnSave.innerHTML = '<i class="fas fa-check"></i> Salvato';
-        // Avvia il timer automaticamente al salvataggio (opzionale, ottima UX)
-        startTimer();
+        // 2. Se OK, passa automaticamente al prossimo step
+        handleAutomaticNext();
       } else {
         alert("Errore nel salvataggio server.");
         btnSave.innerHTML = originalText;
@@ -233,62 +228,42 @@
     });
   }
 
-  function skipSet() {
+  function skipAndNext() {
     if(confirm("Vuoi saltare questa serie?")) {
+      const btnSkip = document.getElementById('btnSkip');
+      btnSkip.disabled = true;
+
       fetch('${pageContext.request.contextPath}/executeScheda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'action=skipSet'
       }).then(response => {
         if (response.ok) {
-          enableNext();
+          handleAutomaticNext();
         } else {
           alert("Errore server.");
+          btnSkip.disabled = false;
         }
       });
     }
   }
 
-  function enableNext() {
-    // Abilita i tasti per procedere se esistono nel DOM
-    const btnNext = document.getElementById('btnNext');
-    const btnFinish = document.getElementById('btnFinish');
-
-    if (btnNext) {
-      btnNext.disabled = false;
-      btnNext.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-    if (btnFinish) {
-      btnFinish.disabled = false;
-      btnFinish.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-
-    // Disabilita input per evitare doppi inserimenti
-    const btnSave = document.getElementById('btnSave');
-    const btnSkip = document.getElementById('btnSkip');
-    if(btnSave) btnSave.disabled = true;
-    if(btnSkip) btnSkip.disabled = true;
-    document.getElementById('reps').disabled = true;
-    document.getElementById('weight').disabled = true;
-  }
-
-  function nextStep() {
-    fetch('${pageContext.request.contextPath}/executeScheda', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'action=next'
-    }).then(response => {
-      if (response.ok) {
-        window.location.reload();
-      } else {
-        alert("Errore nel procedere.");
-      }
-    });
-  }
-
-  function finishWorkout() {
-    if(confirm("Confermi di aver terminato l'allenamento?")) {
+  // Funzione che decide se andare avanti o finire
+  function handleAutomaticNext() {
+    if (isLastStep) {
+      // Se era l'ultima serie, invia il form di fine
       document.getElementById('finishForm').submit();
+    } else {
+      // Altrimenti chiama nextStep e ricarica
+      fetch('${pageContext.request.contextPath}/executeScheda', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'action=next'
+      }).then(response => {
+        if (response.ok) {
+          window.location.reload();
+        }
+      });
     }
   }
 </script>

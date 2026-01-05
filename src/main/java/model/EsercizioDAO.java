@@ -23,6 +23,11 @@ public class EsercizioDAO {
                 e.setRipetizioni(rs.getInt("ripetizioni"));
                 e.setCaricoSuggerito(rs.getInt("caricoSuggerito"));
                 e.setRecupero(rs.getTime("recupero"));
+
+                // MODIFICATO: Lettura Stringa
+                String liv = rs.getString("livello");
+                e.setLivello(liv != null ? liv : "Principiante"); // Default safe
+
                 esercizi.add(e);
             }
         } catch (SQLException e) {
@@ -45,6 +50,11 @@ public class EsercizioDAO {
                     e.setRipetizioni(rs.getInt("ripetizioni"));
                     e.setCaricoSuggerito(rs.getInt("caricoSuggerito"));
                     e.setRecupero(rs.getTime("recupero"));
+
+                    // MODIFICATO: Lettura Stringa
+                    String liv = rs.getString("livello");
+                    e.setLivello(liv != null ? liv : "Principiante");
+
                     return e;
                 }
             }

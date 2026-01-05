@@ -10,6 +10,7 @@ public class Esercizio {
     private int ripetizioni;
     private int caricoSuggerito;
     private String recupero;
+    private String livello; // <--- NUOVO CAMPO STRINGA
 
     public int getIdEsercizio() { return idEsercizio; }
     public void setIdEsercizio(int idEsercizio) { this.idEsercizio = idEsercizio; }
@@ -31,12 +32,20 @@ public class Esercizio {
 
     public String getRecupero() { return recupero; }
 
-    // MODIFICATO: Gestione del null per evitare NullPointerException
     public void setRecupero(Time recupero) {
         if (recupero != null) {
             this.recupero = recupero.toString();
         } else {
-            this.recupero = "00:01:30"; // Default se null
+            this.recupero = "00:01:30";
         }
+    }
+
+    // --- GETTER E SETTER PER IL LIVELLO ---
+    public String getLivello() {
+        return livello;
+    }
+
+    public void setLivello(String livello) {
+        this.livello = livello;
     }
 }
