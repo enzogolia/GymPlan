@@ -107,9 +107,9 @@
               <td style="vertical-align: middle; color: var(--accent-orange);">${ex.gruppoMuscolare}</td>
               <td style="vertical-align: middle;">
                 <c:choose>
-                  <c:when test="${ex.livello == 'Principiante'}"><span class="badge badge-1">Principiante</span></c:when>
-                  <c:when test="${ex.livello == 'Intermedio'}"><span class="badge badge-2">Intermedio</span></c:when>
-                  <c:when test="${ex.livello == 'Esperto'}"><span class="badge badge-3">Esperto</span></c:when>
+                  <c:when test="${ex.livello == 'principiante'}"><span class="badge badge-1">Principiante</span></c:when>
+                  <c:when test="${ex.livello == 'intermedio'}"><span class="badge badge-2">Intermedio</span></c:when>
+                  <c:when test="${ex.livello == 'esperto'}"><span class="badge badge-3">Esperto</span></c:when>
                   <c:otherwise><span class="badge badge-1">${ex.livello}</span></c:otherwise>
                 </c:choose>
               </td>
