@@ -133,7 +133,7 @@ public class EsportaPdfServlet extends HttpServlet {
             e.printStackTrace();
         }
 
-        // 5. INVIO DEL FILE AL BROWSER (La parte fondamentale)
+        // 5. INVIO DEL FILE AL BROWSER 
         response.setContentType("application/pdf");
         // Questo header forza il browser a scaricare il file invece di aprirlo
         response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
@@ -145,6 +145,5 @@ public class EsportaPdfServlet extends HttpServlet {
             os.flush();
         }
 
-        // IMPORTANTE: Nessun forward o redirect qui! La risposta è stata già inviata (il file).
     }
 }
