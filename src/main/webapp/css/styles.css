@@ -372,3 +372,71 @@ footer {
         min-height: 400px;
     }
 }
+/* --- STILI PER IL TASTO PAUSA (execute.jsp) --- */
+
+.pause-section {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #333; /* Linea di separazione sottile */
+    text-align: center;
+    width: 100%;
+}
+
+.btn-pause {
+    background-color: transparent;
+    border: 1px solid #555;
+    color: #888;
+    width: 100%;
+    padding: 0.8rem;
+    transition: all 0.3s ease;
+}
+
+.btn-pause:hover {
+    border-color: var(--text-primary);
+    color: var(--text-primary);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+/* --- MODAL DI PAUSA (Overlay) --- */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Sfondo nero semi-trasparente */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Assicura che stia sopra a tutto */
+    backdrop-filter: blur(5px); /* Effetto sfocatura sfondo */
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    padding: 2.5rem;
+    border-radius: 12px;
+    border: 1px solid #444;
+    text-align: center;
+    max-width: 400px;
+    width: 90%;
+    box-shadow: 0 0 20px rgba(0,0,0,0.7);
+}
+
+.modal-title {
+    color: var(--accent-orange);
+    font-size: 1.8rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+    font-weight: bold;
+}
+
+.modal-text {
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+}
+
+.modal-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
