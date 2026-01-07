@@ -3,11 +3,9 @@
 <%@ taglib prefix="fmt" uri="jakarta.tags.fmt" %>
 <%@ taglib prefix="fn" uri="jakarta.tags.functions" %>
 
-<%-- Inclusione dell'header --%>
 <%@ include file="header.jsp" %>
 
 <%
-  // Controllo di sicurezza: se non c'è stato o flag finished, torna al profilo
   if (session.getAttribute("workoutState") == null && request.getAttribute("finished") == null) {
     response.sendRedirect("profile.jsp");
     return;
@@ -17,15 +15,12 @@
 <div class="container">
 
   <c:choose>
-    <%-- ==================================================================
-         SCENARIO 1: ALLENAMENTO COMPLETATO
-         ================================================================== --%>
+    <%-- SCENARIO 1: ALLENAMENTO COMPLETATO --%>
     <c:when test="${finished}">
       <div class="text-center">
         <h1 style="color: var(--success); margin-bottom: 2rem;">
           <i class="fas fa-trophy"></i> ALLENAMENTO COMPLETATO!
         </h1>
-
         <div class="card" style="max-width: 600px; margin: 0 auto;">
           <h3 style="border-bottom: 1px solid #333; padding-bottom: 10px; margin-bottom: 20px;">
             Report Sessione
@@ -41,7 +36,6 @@
             </div>
           </div>
         </div>
-
         <div class="mt-2">
           <a href="home" class="btn btn-primary">TORNA ALLA HOME</a>
           <a href="report" class="btn btn-secondary">VAI ALLO STORICO</a>
@@ -49,14 +43,10 @@
       </div>
     </c:when>
 
-    <%-- ==================================================================
-         SCENARIO 2: ESECUZIONE IN CORSO
-         ================================================================== --%>
+    <%-- SCENARIO 2: ESECUZIONE IN CORSO --%>
     <c:otherwise>
       <c:set var="state" value="${sessionScope.workoutState}" />
       <c:set var="currEx" value="${state.currentExercise}" />
-
-      <%-- Calcolo se siamo all'ultimo step (ultima serie dell'ultimo esercizio) --%>
       <c:set var="isLastStep" value="${state.currentExerciseIndex == state.esercizi.size() - 1 && state.currentSetIndex == currEx.serieSuggerite}" />
 
       <h1 class="text-center" style="margin-bottom: 20px;">
@@ -65,8 +55,7 @@
 
       <div class="grid-container" style="grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch;">
 
-          <%-- COLONNA SINISTRA: CONTROLLI --%>
-          <%-- justify-content: space-between distribuisce gli elementi per riempire l'altezza fissa --%>
+          <%-- COLONNA SINISTRA --%>
         <div class="card equal-height-card" style="display: flex; flex-direction: column; justify-content: space-between;">
 
           <div>
@@ -86,12 +75,12 @@
             </div>
           </div>
 
-          <div style="text-align: center; padding: 1rem; background: #1a1a1a; border-radius: 8px; margin: 10px 0;">
-            <div id="timerDisplay" style="font-size: 3rem; font-weight: bold; font-family: monospace; color: var(--text-primary);">00:00</div>
-            <div style="margin-top: 10px; display: flex; gap: 10px; justify-content: center;">
-              <button type="button" class="btn btn-secondary" onclick="startTimer()"><i class="fas fa-play"></i> Start</button>
-              <button type="button" class="btn btn-secondary" onclick="stopTimer()"><i class="fas fa-pause"></i> Stop</button>
-              <button type="button" class="btn btn-secondary" onclick="resetTimer()"><i class="fas fa-redo"></i> Reset</button>
+          <div style="text-align: center; padding: 0.5rem; background: #1a1a1a; border-radius: 8px; margin: 5px 0 15px 0;">
+            <div id="timerDisplay" style="font-size: 2.5rem; font-weight: bold; font-family: monospace; color: var(--text-primary);">00:00</div>
+            <div style="margin-top: 5px; display: flex; gap: 10px; justify-content: center;">
+              <button type="button" class="btn btn-secondary" onclick="startTimer()" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;"><i class="fas fa-play"></i> Start</button>
+              <button type="button" class="btn btn-secondary" onclick="stopTimer()" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;"><i class="fas fa-pause"></i> Stop</button>
+              <button type="button" class="btn btn-secondary" onclick="resetTimer()" style="padding: 0.4rem 0.8rem; font-size: 0.9rem;"><i class="fas fa-redo"></i> Reset</button>
             </div>
           </div>
 
@@ -107,7 +96,7 @@
               </div>
             </div>
 
-            <div style="display: flex; gap: 15px;">
+            <div style="display: flex; gap: 15px; margin-bottom: 1.5rem;">
               <button type="button" class="btn btn-primary" id="btnSave" onclick="saveAndNext()" style="flex: 2; padding: 1rem; font-size: 1.1rem;">
                 <i class="fas fa-check"></i>
                 <c:choose>
@@ -115,25 +104,27 @@
                   <c:otherwise>SALVA E PROSSIMO</c:otherwise>
                 </c:choose>
               </button>
-
               <button type="button" class="btn btn-danger" id="btnSkip" onclick="skipAndNext()" style="flex: 1; background-color: #d32f2f;">
                 <i class="fas fa-forward"></i> SALTA
               </button>
             </div>
+
+            <div class="pause-section">
+              <button type="button" class="btn btn-pause" onclick="openPauseModal()">
+                <i class="fas fa-pause-circle"></i> PAUSA / TERMINA
+              </button>
+            </div>
           </div>
 
-            <%-- Form nascosto per finire l'allenamento --%>
           <form action="${pageContext.request.contextPath}/executeScheda" method="post" id="finishForm">
             <input type="hidden" name="action" value="finish">
           </form>
 
         </div>
 
-          <%-- COLONNA DESTRA: IMMAGINE --%>
-          <%-- Nota: Usa le classi 'equal-height-card' e 'execution-card-container' --%>
+          <%-- COLONNA DESTRA --%>
         <div class="card equal-height-card execution-card-container">
           <h3 class="text-center" style="margin-bottom: 1rem;">Esecuzione</h3>
-
           <div class="img-wrapper">
             <img src="${pageContext.request.contextPath}/images/${currEx.immagine}"
                  alt="${currEx.nome}"
@@ -143,21 +134,37 @@
         </div>
 
       </div>
+
+      <%-- --- MODAL DI PAUSA (Nascosto di default) --- --%>
+      <div id="pauseModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-title"><i class="fas fa-pause"></i> In Pausa</div>
+          <p class="modal-text">Timer fermato. Cosa vuoi fare?</p>
+
+          <div class="modal-buttons">
+            <button type="button" class="btn btn-primary" onclick="closePauseModal()">
+              <i class="fas fa-play"></i> RIPRENDI ALLENAMENTO
+            </button>
+
+            <button type="button" class="btn btn-danger" onclick="finishWorkoutEarly()">
+              <i class="fas fa-flag-checkered"></i> TERMINA ORA E SALVA
+            </button>
+          </div>
+        </div>
+      </div>
+
     </c:otherwise>
   </c:choose>
 
 </div>
 
-<%-- JAVASCRIPT --%>
 <script>
-  // Variabile per sapere se è l'ultimo step
   const isLastStep = ${isLastStep != null ? isLastStep : false};
-
   let timerInterval;
   let seconds = 0;
   let targetSeconds = 0;
 
-  // --- PARSING TEMPO RECUPERO ---
+  // --- TIMER SETUP ---
   const recuperoElement = document.getElementById('recuperoTime');
   if (recuperoElement) {
     const timeText = recuperoElement.innerText.trim();
@@ -167,11 +174,10 @@
     } else if (parts.length === 2) {
       targetSeconds = (+parts[0]) * 60 + (+parts[1]);
     } else {
-      targetSeconds = 90; // Default 1m 30s
+      targetSeconds = 90;
     }
   }
 
-  // --- LOGICA TIMER ---
   function updateTimerDisplay() {
     const m = Math.floor(seconds / 60).toString().padStart(2, '0');
     const s = (seconds % 60).toString().padStart(2, '0');
@@ -210,73 +216,70 @@
   function saveAndNext() {
     const reps = document.getElementById('reps').value;
     const weight = document.getElementById('weight').value;
-
-    if(!reps || !weight) {
-      alert("Inserisci ripetizioni e carico.");
-      return;
-    }
+    if(!reps || !weight) { alert("Inserisci ripetizioni e carico."); return; }
 
     const btnSave = document.getElementById('btnSave');
     const originalText = btnSave.innerHTML;
-
-    // Feedback visivo
     btnSave.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Attendi...';
     btnSave.disabled = true;
 
-    // Chiamata AJAX
     fetch('${pageContext.request.contextPath}/executeScheda', {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
       body: 'action=saveSet&reps=' + reps + '&weight=' + weight
     }).then(response => {
-      if (response.ok) {
-        handleAutomaticNext();
-      } else {
-        alert("Errore nel salvataggio server.");
+      if (response.ok) { handleAutomaticNext(); }
+      else {
+        alert("Errore salvataggio.");
         btnSave.innerHTML = originalText;
         btnSave.disabled = false;
       }
-    }).catch(error => {
-      console.error('Error:', error);
-      alert("Errore di connessione.");
-      btnSave.innerHTML = originalText;
-      btnSave.disabled = false;
-    });
+    }).catch(error => { alert("Errore connessione."); btnSave.disabled = false; });
   }
 
   function skipAndNext() {
     if(confirm("Vuoi saltare questa serie?")) {
-      const btnSkip = document.getElementById('btnSkip');
-      btnSkip.disabled = true;
-
       fetch('${pageContext.request.contextPath}/executeScheda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'action=skipSet'
-      }).then(response => {
-        if (response.ok) {
-          handleAutomaticNext();
-        } else {
-          alert("Errore server.");
-          btnSkip.disabled = false;
-        }
-      });
+      }).then(response => { if (response.ok) handleAutomaticNext(); });
     }
   }
 
   function handleAutomaticNext() {
-    if (isLastStep) {
-      document.getElementById('finishForm').submit();
-    } else {
+    if (isLastStep) { document.getElementById('finishForm').submit(); }
+    else {
       fetch('${pageContext.request.contextPath}/executeScheda', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: 'action=next'
-      }).then(response => {
-        if (response.ok) {
-          window.location.reload();
-        }
-      });
+      }).then(response => { if (response.ok) window.location.reload(); });
+    }
+  }
+
+  // --- GESTIONE PAUSA (MODAL) ---
+
+  // Apre il modal e ferma il timer
+  function openPauseModal() {
+    // 1. Ferma il timer se sta andando
+    stopTimer();
+
+    // 2. Mostra il modal impostando display flex
+    document.getElementById('pauseModal').style.display = 'flex';
+  }
+
+  // Chiude il modal (non riavvia il timer automaticamente per scelta, o puoi chiamare startTimer())
+  function closePauseModal() {
+    document.getElementById('pauseModal').style.display = 'none';
+    // Opzionale: se vuoi che il timer riparta da solo, scommenta:
+    // startTimer();
+  }
+
+  // Termina l'allenamento immediatamente inviando il form "finish"
+  function finishWorkoutEarly() {
+    if(confirm("Sei sicuro di voler terminare l'allenamento adesso?")) {
+      document.getElementById('finishForm').submit();
     }
   }
 </script>
